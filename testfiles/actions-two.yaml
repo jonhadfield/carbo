@@ -1,0 +1,12 @@
+---
+- action: log
+  policy: /subscriptions/0a914e76-4921-4c19-b460-a2d36003525a/resourceGroups/flying/providers/Microsoft.Network/frontdoorWebApplicationFirewallPolicies/lemon
+  max-rules: 1
+  paths:
+    - testfiles/ipsets/block-list-one.ipset
+    - testfiles/ipsets/invalid-list-one.ipset
+- action: block
+  policy: /subscriptions/0a914e76-4921-4c19-b460-a2d36003525a/resourceGroups/flying/providers/Microsoft.Network/frontdoorWebApplicationFirewallPolicies/apple
+  max-rules: 1
+  paths:
+    - testfiles/ipsets/sslproxies_7d.ipset
