@@ -202,60 +202,60 @@ func TestCustomRuleHasDefaultDenyFive(t *testing.T) {
 	require.True(t, dd)
 }
 
-func customRuleWithDefaultDeny() frontdoor.CustomRule {
-	ipnpi := ipMatchValuesNoPublicInternet()
-	mc1 := frontdoor.MatchCondition{
-		MatchVariable:   "RemoteAddr",
-		Selector:        nil,
-		Operator:        "IPMatch",
-		NegateCondition: boolToPointer(true),
-		MatchValue:      &ipnpi,
-		Transforms:      nil,
-	}
-
-	mcSet := []frontdoor.MatchCondition{mc1}
-
-	return frontdoor.CustomRule{
-		Name:            strToPointer("CustomRuleWithDefaultDeny"),
-		Priority:        int32ToPointer(1),
-		EnabledState:    "Enabled",
-		RuleType:        "MatchRule",
-		MatchConditions: &mcSet,
-		Action:          "Block",
-	}
-}
-
-func customRuleWithDefaultAllow() frontdoor.CustomRule {
-	ipnpi := ipMatchValuesNoPublicInternet()
-	ipwpi := ipMatchValuesWithPublicInternet()
-	mc1 := frontdoor.MatchCondition{
-		MatchVariable:   "RemoteAddr",
-		Selector:        nil,
-		Operator:        "IPMatch",
-		NegateCondition: boolToPointer(true),
-		MatchValue:      &ipnpi,
-		Transforms:      nil,
-	}
-	mc2 := frontdoor.MatchCondition{
-		MatchVariable:   "RemoteAddr",
-		Selector:        nil,
-		Operator:        "IPMatch",
-		NegateCondition: boolToPointer(false),
-		MatchValue:      &ipwpi,
-		Transforms:      nil,
-	}
-
-	mcSet := []frontdoor.MatchCondition{mc1, mc2}
-
-	return frontdoor.CustomRule{
-		Name:            strToPointer("CustomRuleWithDefaultDeny"),
-		Priority:        int32ToPointer(1),
-		EnabledState:    "Enabled",
-		RuleType:        "MatchRule",
-		MatchConditions: &mcSet,
-		Action:          "Allow",
-	}
-}
+// func customRuleWithDefaultDeny() frontdoor.CustomRule {
+// 	ipnpi := ipMatchValuesNoPublicInternet()
+// 	mc1 := frontdoor.MatchCondition{
+// 		MatchVariable:   "RemoteAddr",
+// 		Selector:        nil,
+// 		Operator:        "IPMatch",
+// 		NegateCondition: boolToPointer(true),
+// 		MatchValue:      &ipnpi,
+// 		Transforms:      nil,
+// 	}
+//
+// 	mcSet := []frontdoor.MatchCondition{mc1}
+//
+// 	return frontdoor.CustomRule{
+// 		Name:            strToPointer("CustomRuleWithDefaultDeny"),
+// 		Priority:        int32ToPointer(1),
+// 		EnabledState:    "Enabled",
+// 		RuleType:        "MatchRule",
+// 		MatchConditions: &mcSet,
+// 		Action:          "Block",
+// 	}
+// }
+//
+// func customRuleWithDefaultAllow() frontdoor.CustomRule {
+// 	ipnpi := ipMatchValuesNoPublicInternet()
+// 	ipwpi := ipMatchValuesWithPublicInternet()
+// 	mc1 := frontdoor.MatchCondition{
+// 		MatchVariable:   "RemoteAddr",
+// 		Selector:        nil,
+// 		Operator:        "IPMatch",
+// 		NegateCondition: boolToPointer(true),
+// 		MatchValue:      &ipnpi,
+// 		Transforms:      nil,
+// 	}
+// 	mc2 := frontdoor.MatchCondition{
+// 		MatchVariable:   "RemoteAddr",
+// 		Selector:        nil,
+// 		Operator:        "IPMatch",
+// 		NegateCondition: boolToPointer(false),
+// 		MatchValue:      &ipwpi,
+// 		Transforms:      nil,
+// 	}
+//
+// 	mcSet := []frontdoor.MatchCondition{mc1, mc2}
+//
+// 	return frontdoor.CustomRule{
+// 		Name:            strToPointer("CustomRuleWithDefaultDeny"),
+// 		Priority:        int32ToPointer(1),
+// 		EnabledState:    "Enabled",
+// 		RuleType:        "MatchRule",
+// 		MatchConditions: &mcSet,
+// 		Action:          "Allow",
+// 	}
+// }
 
 //
 // func customRuleWithoutDefaultDeny() frontdoor.CustomRule {

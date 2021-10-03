@@ -74,7 +74,6 @@ type pushPolicyInput struct {
 	Name           string
 	subscription   string
 	resourceGroup  string
-	policiesClient *frontdoor.PoliciesClient
 	policy         frontdoor.WebApplicationFirewallPolicy
 	Debug          bool
 	Timeout        int64
@@ -182,7 +181,6 @@ func ParseResourceID(rawID string) ResourceID {
 		ResourceGroup:  components[4],
 		Provider:       components[6],
 		Name:           components[8],
-		Raw:            rawID,
 	}
 }
 

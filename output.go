@@ -296,15 +296,15 @@ func outputPolicy(policy frontdoor.WebApplicationFirewallPolicy, showFull bool) 
 
 // dashIfEmptyString returns the string value (or value pointed to) or a hyphen if the pointer is nil or value empty
 func dashIfEmptyString(val interface{}) string {
-	switch val.(type) {
+	switch v := val.(type) {
 	case *string:
-		a := val.(*string)
-		if a != nil && len(*a) > 0 {
-			return *a
+		if v != nil && len(*v) > 0 {
+			return *v
 		}
 	case string:
-		if len(val.(string)) > 0 {
-			return val.(string)
+		// s := val.(string)
+		if len(v) > 0 {
+			return v
 		}
 	default:
 		return "-"
