@@ -131,6 +131,7 @@ func applyIPChanges(s *session, input ApplyIPsInput) (err error) {
 
 	if input.DryRun {
 		log.Printf("%d changes to %s list would be applied\n", gppO.customRuleChanges, lowercaseAction)
+
 		return nil
 	}
 

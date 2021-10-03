@@ -28,9 +28,6 @@ func ValidateResourceID(rawID string, extended bool) error {
 		if !strings.Contains(rawID, "|") {
 			return fmt.Errorf("invalid format for extended resource id")
 		}
-
-		rawID = strings.Split(rawID, "|")[0]
-
 	}
 
 	return nil

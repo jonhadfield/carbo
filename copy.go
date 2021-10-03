@@ -69,6 +69,9 @@ func CopyRules(i CopyRulesInput) error {
 		original: sourcePolicy.policies[0].Policy,
 		new:      targetPolicy.policies[0].Policy,
 	})
+	if err != nil {
+		return err
+	}
 
 	switch {
 	case o.customRuleChanges == 0 && i.CustomRulesOnly:

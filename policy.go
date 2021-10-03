@@ -103,7 +103,7 @@ func (s *session) getAllPolicies(i getWrappedPoliciesInput) (gres []resources.Ge
 
 	for it.NotDone() {
 		if it.Value().ID == nil {
-			tracerr.Errorf("Azure returned a WAF policy without a resource ID: %+v", it.Value())
+			return nil, tracerr.Errorf("Azure returned a WAF policy without a resource ID: %+v", it.Value())
 		}
 
 		// add if filters not provided, or filters are provided, and we have a match
@@ -396,17 +396,16 @@ type generatePolicyPatchOutput struct {
 
 func generatePolicyPatch(i generatePolicyPatchInput) (output generatePolicyPatchOutput, err error) {
 	var originalBytes []byte
-	switch i.original.(type) {
+	switch v := i.original.(type) {
 	case []byte:
-		originalBytes = i.original.([]byte)
+		originalBytes = v
 	case frontdoor.WebApplicationFirewallPolicy:
-		originalBytes, err = json.Marshal(i.original)
+		originalBytes, err = json.Marshal(v)
 		if err != nil {
 			return output, tracerr.Wrap(err)
 		}
 	case WrappedPolicy:
-		wp := i.original.(WrappedPolicy)
-		originalBytes, err = json.Marshal(wp.Policy)
+		originalBytes, err = json.Marshal(v.Policy)
 		if err != nil {
 			return output, tracerr.Wrap(err)
 		}
