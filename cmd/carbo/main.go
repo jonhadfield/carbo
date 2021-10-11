@@ -64,11 +64,13 @@ func main() {
 				}
 
 				return CopyRules(CopyRulesInput{
-					SubscriptionID: c.String("subscription-id"),
-					Source:         c.String("source"),
-					Target:         c.String("target"),
-					Async:          c.Bool("async"),
-					Quiet:          c.Bool("quiet"),
+					SubscriptionID:   c.String("subscription-id"),
+					Source:           c.String("source"),
+					Target:           c.String("target"),
+					ManagedRulesOnly: c.Bool("managed-rules"),
+					CustomRulesOnly:  c.Bool("custom-rules"),
+					Async:            c.Bool("async"),
+					Quiet:            c.Bool("quiet"),
 				})
 			},
 		},

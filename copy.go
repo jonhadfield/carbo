@@ -39,8 +39,6 @@ func CopyRules(i CopyRulesInput) error {
 	logrus.Debug("copy target: ", i.Target)
 	src := ParseResourceID(i.Source)
 	trc := ParseResourceID(i.Target)
-	logrus.Tracef("copy source: %+v\n", src)
-	logrus.Tracef("copy target: %+v\n", trc)
 
 	sourcePolicy, err := s.getWrappedPolicies(getWrappedPoliciesInput{
 		subscriptionID:    src.SubscriptionID,
