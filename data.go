@@ -71,13 +71,13 @@ func getFrontDoorByID(s *session, frontDoorID string) (frontDoor FrontDoor, err 
 
 // pushPolicyInput defines the input for the pushPolicy function
 type pushPolicyInput struct {
-	Name           string
-	subscription   string
-	resourceGroup  string
-	policy         frontdoor.WebApplicationFirewallPolicy
-	Debug          bool
-	Timeout        int64
-	Async          bool
+	Name          string
+	subscription  string
+	resourceGroup string
+	policy        frontdoor.WebApplicationFirewallPolicy
+	Debug         bool
+	Timeout       int64
+	Async         bool
 }
 
 const (
@@ -181,6 +181,7 @@ func ParseResourceID(rawID string) ResourceID {
 		ResourceGroup:  components[4],
 		Provider:       components[6],
 		Name:           components[8],
+		Raw:            rawID,
 	}
 }
 
