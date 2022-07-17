@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jonhadfield/carbo/helpers"
 	"github.com/jonhadfield/carbo/policy"
+	"github.com/jonhadfield/carbo/session"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -27,7 +28,7 @@ func CopyRules(i CopyRulesInput) error {
 		return fmt.Errorf("source and target must be different")
 	}
 
-	s := policy.Session{}
+	s := session.Session{}
 
 	if err := helpers.ValidateResourceID(i.Source, false); err != nil {
 		return err
@@ -42,7 +43,7 @@ func CopyRules(i CopyRulesInput) error {
 	src := policy.ParseResourceID(i.Source)
 	trc := policy.ParseResourceID(i.Target)
 
-	sourcePolicy, err := s.GetWrappedPolicies(policy.GetWrappedPoliciesInput{
+	sourcePolicy, err := policy.GetWrappedPolicies(&s, policy.GetWrappedPoliciesInput{
 		SubscriptionID:    src.SubscriptionID,
 		FilterResourceIDs: []string{src.Raw},
 	})
@@ -53,7 +54,7 @@ func CopyRules(i CopyRulesInput) error {
 		return tracerr.New("source policy not found")
 	}
 
-	targetPolicy, err := s.GetWrappedPolicies(policy.GetWrappedPoliciesInput{
+	targetPolicy, err := policy.GetWrappedPolicies(&s, policy.GetWrappedPoliciesInput{
 		SubscriptionID:    trc.SubscriptionID,
 		FilterResourceIDs: []string{trc.Raw},
 	})
@@ -84,7 +85,7 @@ func CopyRules(i CopyRulesInput) error {
 
 	updatedTarget := copyRules(sourcePolicy.Policies[0], targetPolicy.Policies[0], i.CustomRulesOnly, i.ManagedRulesOnly)
 
-	return s.PushPolicy(policy.PushPolicyInput{
+	return policy.PushPolicy(&s, policy.PushPolicyInput{
 		Name:          updatedTarget.Name,
 		Subscription:  updatedTarget.SubscriptionID,
 		ResourceGroup: updatedTarget.ResourceGroup,

@@ -5,49 +5,15 @@ import (
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/frontdoor/mgmt/frontdoor"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/jonhadfield/carbo/helpers"
+	"github.com/jonhadfield/carbo/session"
 	"github.com/sirupsen/logrus"
 	"github.com/ztrue/tracerr"
 	"time"
 )
 
-type Session struct {
-	Authorizer               *autorest.Authorizer
-	FrontDoorPoliciesClients map[string]*frontdoor.PoliciesClient
-	FrontDoorsClients        map[string]*frontdoor.FrontDoorsClient
-	ResourcesClients         map[string]*resources.Client
-}
-
-func (s *Session) GetAuthorizer() error {
-	if s.Authorizer != nil {
-		return nil
-	}
-	// try from environment first
-	a, err := auth.NewAuthorizerFromEnvironment()
-	if err == nil {
-		s.Authorizer = &a
-
-		logrus.Debug("retrieved Authorizer from environment")
-
-		return nil
-	}
-
-	a, err = auth.NewAuthorizerFromCLI()
-	if err == nil {
-		s.Authorizer = &a
-
-		logrus.Debug("retrieved Authorizer from cli")
-
-		return nil
-	}
-
-	return err
-}
-
-func (s *Session) GetRawPolicy(subscription string, resourceGroup string, name string) (wafPolicy frontdoor.WebApplicationFirewallPolicy, err error) {
-	err = s.getFrontDoorPoliciesClient(subscription)
+func GetRawPolicy(s *session.Session, subscription string, resourceGroup string, name string) (wafPolicy frontdoor.WebApplicationFirewallPolicy, err error) {
+	err = s.GetFrontDoorPoliciesClient(subscription)
 	if err != nil {
 		return
 	}
@@ -79,7 +45,7 @@ const (
 )
 
 // PushPolicy creates or updates a waf Policy with the provided Policy instance.
-func (s *Session) PushPolicy(i PushPolicyInput) (err error) {
+func PushPolicy(s *session.Session, i PushPolicyInput) (err error) {
 	var ctx context.Context
 	if !i.Async {
 		timeout := time.Duration(i.Timeout) * time.Second
@@ -108,7 +74,7 @@ func (s *Session) PushPolicy(i PushPolicyInput) (err error) {
 	}
 
 	// check we're not missing a Policies client for the Subscription
-	err = s.getFrontDoorPoliciesClient(i.Subscription)
+	err = s.GetFrontDoorPoliciesClient(i.Subscription)
 	if err != nil {
 		return
 	}
@@ -130,8 +96,8 @@ func (s *Session) PushPolicy(i PushPolicyInput) (err error) {
 	return
 }
 
-func (s *Session) GetAllPolicies(i GetWrappedPoliciesInput) (gres []resources.GenericResourceExpanded, err error) {
-	err = s.getResourcesClient(i.SubscriptionID)
+func GetAllPolicies(s *session.Session, i GetWrappedPoliciesInput) (gres []resources.GenericResourceExpanded, err error) {
+	err = s.GetResourcesClient(i.SubscriptionID)
 	if err != nil {
 		return
 	}
@@ -180,91 +146,6 @@ func (s *Session) GetAllPolicies(i GetWrappedPoliciesInput) (gres []resources.Ge
 	return gres, err
 }
 
-// getResourcesClient creates a new resources client instance and stores it in the provided session.
-// if an Authorizer instance is missing, it will make a call to create it and then store in the session also.
-func (s *Session) getResourcesClient(subID string) (err error) {
-	if s.ResourcesClients == nil {
-		s.ResourcesClients = make(map[string]*resources.Client)
-	}
-
-	if s.ResourcesClients[subID] != nil {
-		logrus.Debugf("re-using resources client for Subscription: %s", subID)
-
-		return nil
-	}
-
-	logrus.Debugf("creating resources client for Subscription: %s", subID)
-
-	c := resources.NewClient(subID)
-
-	err = s.GetAuthorizer()
-	if err != nil {
-		return
-	}
-
-	s.ResourcesClients[subID] = &c
-	s.ResourcesClients[subID].Authorizer = *s.Authorizer
-
-	return
-}
-
-// getFrontDoorsClient creates a front doors client for the given Subscription and stores it in the provided session.
-// if an Authorizer instance is missing, it will make a call to create it and then store in the session also.
-func (s *Session) GetFrontDoorsClient(subID string) (c frontdoor.FrontDoorsClient, err error) {
-	if s.FrontDoorsClients == nil {
-		s.FrontDoorsClients = make(map[string]*frontdoor.FrontDoorsClient)
-	}
-
-	if s.FrontDoorsClients[subID] != nil {
-		logrus.Debugf("re-using front doors client for Subscription: %s", subID)
-
-		return *s.FrontDoorsClients[subID], nil
-	}
-
-	logrus.Debugf("creating front doors client")
-
-	frontDoorsClient := frontdoor.NewFrontDoorsClient(subID)
-
-	err = s.GetAuthorizer()
-	if err != nil {
-		return
-	}
-
-	frontDoorsClient.Authorizer = *s.Authorizer
-
-	s.FrontDoorsClients[subID] = &frontDoorsClient
-
-	return
-}
-
-// getFrontDoorPoliciesClient creates a front doors Policies client for the given Subscription and stores it in the provided session.
-// if an Authorizer instance is missing, it will make a call to create it and then store in the session also.
-func (s *Session) getFrontDoorPoliciesClient(subID string) (err error) {
-	if s.FrontDoorPoliciesClients == nil {
-		s.FrontDoorPoliciesClients = make(map[string]*frontdoor.PoliciesClient)
-	}
-	if s.FrontDoorPoliciesClients[subID] != nil {
-		logrus.Debugf("re-using front door Policies client for Subscription: %s", subID)
-
-		return nil
-	}
-
-	logrus.Debugf("creating front door Policies client for Subscription: %s", subID)
-
-	if s.Authorizer == nil {
-		err = s.GetAuthorizer()
-		if err != nil {
-			return
-		}
-	}
-
-	frontDoorPoliciesClient := frontdoor.NewPoliciesClient(subID)
-	frontDoorPoliciesClient.Authorizer = *s.Authorizer
-	s.FrontDoorPoliciesClients[subID] = &frontDoorPoliciesClient
-
-	return
-}
-
 type GetWrappedPoliciesInput struct {
 	SubscriptionID    string
 	AppVersion        string
@@ -276,7 +157,7 @@ type GetWrappedPoliciesOutput struct {
 	Policies []WrappedPolicy
 }
 
-func (s *Session) GetWrappedPolicies(i GetWrappedPoliciesInput) (o GetWrappedPoliciesOutput, err error) {
+func GetWrappedPolicies(s *session.Session, i GetWrappedPoliciesInput) (o GetWrappedPoliciesOutput, err error) {
 	var rids []ResourceID
 
 	if len(i.FilterResourceIDs) > 0 {
@@ -285,7 +166,7 @@ func (s *Session) GetWrappedPolicies(i GetWrappedPoliciesInput) (o GetWrappedPol
 	} else {
 		// retrieve all Policies as generic resources
 		var gres []resources.GenericResourceExpanded
-		gres, err = s.GetAllPolicies(i)
+		gres, err = GetAllPolicies(s, i)
 		if err != nil {
 			return
 		}
@@ -297,7 +178,7 @@ func (s *Session) GetWrappedPolicies(i GetWrappedPoliciesInput) (o GetWrappedPol
 		var p frontdoor.WebApplicationFirewallPolicy
 		logrus.Debugf("retrieving raw Policy with: %s %s %s", rid.SubscriptionID, rid.ResourceGroup, rid.Name)
 
-		p, err = s.GetRawPolicy(rid.SubscriptionID, rid.ResourceGroup, rid.Name)
+		p, err = GetRawPolicy(s, rid.SubscriptionID, rid.ResourceGroup, rid.Name)
 		if err != nil {
 			return
 		}
@@ -318,9 +199,9 @@ func (s *Session) GetWrappedPolicies(i GetWrappedPoliciesInput) (o GetWrappedPol
 	return
 }
 
-func GetFrontDoorIDs(s *Session, subID string) (ids []string, err error) {
+func GetFrontDoorIDs(s *session.Session, subID string) (ids []string, err error) {
 	// get all front door ids
-	err = s.getResourcesClient(subID)
+	err = s.GetResourcesClient(subID)
 	if err != nil {
 		return
 	}
@@ -350,7 +231,7 @@ func GetFrontDoorIDs(s *Session, subID string) (ids []string, err error) {
 	return
 }
 
-func GetFrontDoors(s *Session, subID string) (frontDoors FrontDoors, err error) {
+func GetFrontDoors(s *session.Session, subID string) (frontDoors FrontDoors, err error) {
 	frontDoorIDs, err := GetFrontDoorIDs(s, subID)
 	if err != nil || len(frontDoorIDs) == 0 {
 		return
@@ -361,7 +242,7 @@ func GetFrontDoors(s *Session, subID string) (frontDoors FrontDoors, err error) 
 		return
 	}
 
-	err = s.getFrontDoorPoliciesClient(subID)
+	err = s.GetFrontDoorPoliciesClient(subID)
 	if err != nil {
 		return
 	}

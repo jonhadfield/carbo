@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jonhadfield/carbo/helpers"
+	"github.com/jonhadfield/carbo/session"
 	"github.com/wI2L/jsondiff"
 	"github.com/ztrue/tracerr"
 	"os"
@@ -22,13 +23,13 @@ import (
 
 // PrintPolicy outputs the raw json policy with the provided resource id.
 func PrintPolicy(id string) error {
-	s := Session{}
+	s := session.Session{}
 
 	components := ParseResourceID(id)
 
 	fmt.Println(components)
 
-	p, err := s.GetRawPolicy(components.SubscriptionID, components.ResourceGroup, components.Name)
+	p, err := GetRawPolicy(&s, components.SubscriptionID, components.ResourceGroup, components.Name)
 	if err != nil {
 		return err
 	}
@@ -236,9 +237,9 @@ func GeneratePolicyPatch(i GeneratePolicyPatchInput) (output GeneratePolicyPatch
 func ShowPolicy(policyID string, showFull bool) error {
 	rid := ParseResourceID(policyID)
 
-	s := Session{}
+	s := session.Session{}
 
-	p, err := s.GetRawPolicy(rid.SubscriptionID, rid.ResourceGroup, rid.Name)
+	p, err := GetRawPolicy(&s, rid.SubscriptionID, rid.ResourceGroup, rid.Name)
 	if err != nil {
 		return err
 	}
@@ -267,7 +268,7 @@ type GeneratePolicyPatchInput struct {
 }
 
 func ListFrontDoors(subID string) error {
-	s := Session{}
+	s := session.Session{}
 
 	frontDoors, err := GetFrontDoors(&s, subID)
 	if err != nil {

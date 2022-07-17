@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/jonhadfield/carbo/helpers"
+	"github.com/jonhadfield/carbo/session"
 	"github.com/sirupsen/logrus"
 	"github.com/ztrue/tracerr"
 	"io/fs"
@@ -24,7 +25,7 @@ import (
 
 // GetFrontDoorByID returns a front door instance for the provided id.
 // it includes endpoints with any associated waf policies.
-func GetFrontDoorByID(s *Session, frontDoorID string) (frontDoor FrontDoor, err error) {
+func GetFrontDoorByID(s *session.Session, frontDoorID string) (frontDoor FrontDoor, err error) {
 	ctx := context.Background()
 
 	rID := ParseResourceID(frontDoorID)
@@ -46,7 +47,7 @@ func GetFrontDoorByID(s *Session, frontDoorID string) (frontDoor FrontDoor, err 
 			if !ok {
 				rid := ParseResourceID(*e.WebApplicationFirewallPolicyLink.ID)
 
-				wafPolicy, err = s.GetRawPolicy(rID.SubscriptionID, rid.ResourceGroup, rid.Name)
+				wafPolicy, err = GetRawPolicy(s, rID.SubscriptionID, rid.ResourceGroup, rid.Name)
 				if err != nil {
 					return
 				}
@@ -239,7 +240,7 @@ func LoadWrappedPolicyFromFile(f string) (wp WrappedPolicy, err error) {
 }
 
 // applyIPChanges updates an existing custom policy with IPs matching the requested action
-func applyIPChanges(s *Session, input ApplyIPsInput) (err error) {
+func applyIPChanges(s *session.Session, input ApplyIPsInput) (err error) {
 	prefix, err := helpers.PrefixFromAction(input.Action)
 	if err != nil {
 		return
@@ -269,7 +270,7 @@ func applyIPChanges(s *Session, input ApplyIPsInput) (err error) {
 	name := input.RID.Name
 
 	// check if Policy exists
-	p, err = s.GetRawPolicy(subscription, resourceGroup, name)
+	p, err = GetRawPolicy(s, subscription, resourceGroup, name)
 	if err != nil {
 		return err
 	}
@@ -347,7 +348,7 @@ func applyIPChanges(s *Session, input ApplyIPsInput) (err error) {
 
 	log.Printf("updating Policy %s\n", *p.Name)
 
-	err = s.PushPolicy(PushPolicyInput{
+	err = PushPolicy(s, PushPolicyInput{
 		Name:          *p.Name,
 		Subscription:  input.RID.SubscriptionID,
 		ResourceGroup: input.RID.ResourceGroup,
@@ -364,7 +365,7 @@ func applyIPChanges(s *Session, input ApplyIPsInput) (err error) {
 // ApplyIPChanges accepts user input specifying IPs, or filepath containing IPs, and then adds them to custom rules
 // matching the specified action
 func ApplyIPChanges(input ApplyIPsInput) (err error) {
-	s := Session{}
+	s := session.Session{}
 
 	return applyIPChanges(&s, input)
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jonhadfield/carbo/helpers"
+	"github.com/jonhadfield/carbo/session"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"io/fs"
@@ -24,9 +25,9 @@ func ListPolicies(subID, appVersion string, max int) error {
 		return fmt.Errorf("invalid maximum number of policies to return")
 	}
 
-	s := Session{}
+	s := session.Session{}
 
-	o, err := s.GetAllPolicies(GetWrappedPoliciesInput{
+	o, err := GetAllPolicies(&s, GetWrappedPoliciesInput{
 		SubscriptionID:    subID,
 		AppVersion:        appVersion,
 		Max:               max,
@@ -73,12 +74,12 @@ type WrappedPolicy struct {
 
 func DeleteCustomRules(dcri DeleteCustomRulesInput) (err error) {
 	// preflight checks
-	s := Session{}
+	s := session.Session{}
 
 	return deleteCustomRules(&s, dcri)
 }
 
-func deleteCustomRules(s *Session, dcri DeleteCustomRulesInput) (err error) {
+func deleteCustomRules(s *session.Session, dcri DeleteCustomRulesInput) (err error) {
 	var p frontdoor.WebApplicationFirewallPolicy
 
 	subscription := dcri.RID.SubscriptionID
@@ -86,7 +87,7 @@ func deleteCustomRules(s *Session, dcri DeleteCustomRulesInput) (err error) {
 	name := dcri.RID.Name
 
 	// check if Policy exists
-	p, err = s.GetRawPolicy(subscription, resourceGroup, name)
+	p, err = GetRawPolicy(s, subscription, resourceGroup, name)
 	if err != nil {
 		return err
 	}
@@ -116,7 +117,7 @@ func deleteCustomRules(s *Session, dcri DeleteCustomRulesInput) (err error) {
 
 	log.Printf("updating Policy %s\n", *p.Name)
 
-	err = s.PushPolicy(PushPolicyInput{
+	err = PushPolicy(s, PushPolicyInput{
 		Name:          *p.Name,
 		Subscription:  dcri.RID.SubscriptionID,
 		ResourceGroup: dcri.RID.ResourceGroup,
@@ -137,7 +138,7 @@ type DeleteCustomRulesInput struct {
 // PrintPolicyCustomRule outputs the custom rule for a given resource.
 // the id is an extended resource id: <policy>|<custom rule name>.
 func PrintPolicyCustomRule(id string) error {
-	s := Session{}
+	s := session.Session{}
 
 	cr, err := GetRawPolicyCustomRuleByID(&s, id)
 	if err != nil {
@@ -158,7 +159,7 @@ func PrintPolicyCustomRule(id string) error {
 
 // GetRawPolicyCustomRuleByID returns a custom rule matching the resource id.
 // the id is an extended resource id: <policy>|<custom rule name>.
-func GetRawPolicyCustomRuleByID(s *Session, id string) (pcr frontdoor.CustomRule, err error) {
+func GetRawPolicyCustomRuleByID(s *session.Session, id string) (pcr frontdoor.CustomRule, err error) {
 	pid, ruleName, err := helpers.SplitExtendedID(id)
 	if err != nil {
 		return
@@ -166,7 +167,7 @@ func GetRawPolicyCustomRuleByID(s *Session, id string) (pcr frontdoor.CustomRule
 
 	rid := ParseResourceID(pid)
 
-	p, err := s.GetRawPolicy(rid.SubscriptionID, rid.ResourceGroup, rid.Name)
+	p, err := GetRawPolicy(s, rid.SubscriptionID, rid.ResourceGroup, rid.Name)
 	if err != nil {
 		return pcr, err
 	}
