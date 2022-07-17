@@ -32,5 +32,8 @@ src/
 /*.yaml
 /*.yml
 
+# ignore test files. dni = do not include
+*.dni
+
 # Azure Functions testing
 local.settings.json
