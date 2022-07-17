@@ -1,6 +1,8 @@
 package carbo
 
 import (
+	"github.com/jonhadfield/carbo/helpers"
+	"github.com/jonhadfield/carbo/policy"
 	"log"
 	"net"
 	"testing"
@@ -18,7 +20,7 @@ func inc(ip net.IP) {
 }
 
 // generateIPNets takes a CIDR and produces a list of IPNets within that range
-func generateIPNets(cidr string) (ipns IPNets) {
+func generateIPNets(cidr string) (ipns policy.IPNets) {
 	ip, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
 		log.Fatal(err)
@@ -49,7 +51,7 @@ func TestGenerateCustomRulesFromIPNets(t *testing.T) {
 
 	require.Len(t, ipns, 16382)
 
-	crs, err := genCustomRulesFromIPNets(ipns, 90, "Block")
+	crs, err := policy.GenCustomRulesFromIPNets(ipns, 90, "Block")
 	require.NoError(t, err)
 	require.Len(t, crs, 28)
 
@@ -58,7 +60,7 @@ func TestGenerateCustomRulesFromIPNets(t *testing.T) {
 		mc := matchConditions[0]
 
 		for y, mv := range *mc.MatchValue {
-			require.Equal(t, ipns[x*MaxIPMatchValues+y].String(), mv)
+			require.Equal(t, ipns[x*helpers.MaxIPMatchValues+y].String(), mv)
 		}
 	}
 }
@@ -68,7 +70,7 @@ func TestGenerateCustomRulesFromIPNetsLimitsToMaxRules(t *testing.T) {
 	ipns := generateIPNets("10.0.0.0/21")
 	require.Len(t, ipns, 2046)
 
-	crs, err := genCustomRulesFromIPNets(ipns, 3, "Block")
+	crs, err := policy.GenCustomRulesFromIPNets(ipns, 3, "Block")
 	require.NoError(t, err)
 
 	require.Len(t, crs, 3)
@@ -79,7 +81,7 @@ func TestGenerateCustomRulesFromIPNetsLimitsNotLimitedWhenMaxRulesZero(t *testin
 	ipns := generateIPNets("10.0.0.0/21")
 	require.Len(t, ipns, 2046)
 
-	crs, err := genCustomRulesFromIPNets(ipns, 0, "Block")
+	crs, err := policy.GenCustomRulesFromIPNets(ipns, 0, "Block")
 
 	require.NoError(t, err)
 	require.Len(t, crs, 4)
@@ -90,6 +92,6 @@ func TestGenerateCustomRulesFromIPNetsWithInvalidAction(t *testing.T) {
 	ipns := generateIPNets("10.0.0.0/21")
 
 	require.Len(t, ipns, 2046)
-	_, err := genCustomRulesFromIPNets(ipns, 0, "Blocker")
+	_, err := policy.GenCustomRulesFromIPNets(ipns, 0, "Blocker")
 	require.Error(t, err)
 }

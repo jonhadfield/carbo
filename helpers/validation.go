@@ -1,4 +1,4 @@
-package carbo
+package helpers
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ func MatchValuesHasMatchAll(mvs *[]string, matchVariable frontdoor.MatchVariable
 	case "RemoteAddr":
 		switch operator {
 		case "IPMatch":
-			if stringInSlice("0.0.0.0/0", *mvs, false) {
+			if StringInSlice("0.0.0.0/0", *mvs, false) {
 				return true, nil
 			}
 		}

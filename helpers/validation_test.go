@@ -1,4 +1,4 @@
-package carbo
+package helpers
 
 import (
 	"testing"
@@ -306,7 +306,7 @@ func TestMatchValuesHasMatchAll(t *testing.T) {
 //	case "RemoteAddr":
 //		switch operator {
 //		case "IPMatch":
-//			if stringInSlice("0.0.0.0/0", *mvs, false) {
+//			if StringInSlice("0.0.0.0/0", *mvs, false) {
 //				return true, nil
 //			}
 //		}

@@ -1,6 +1,8 @@
-package carbo
+package policy
 
 import (
+	"github.com/jonhadfield/carbo"
+	"github.com/jonhadfield/carbo/backup"
 	"reflect"
 	"testing"
 
@@ -10,56 +12,56 @@ import (
 )
 
 func TestMatchExistingPolicyByID(t *testing.T) {
-	wp, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	wp, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
 	targetPolicyID := "/subscriptions/0a914e76-4921-4c19-b460-a2d36003525a/resourceGroups/flying/providers/Microsoft.Network/frontdoorWebApplicationFirewallPolicies/mypolicyone"
-	found, policy := matchExistingPolicyByID(targetPolicyID, []WrappedPolicy{wp})
+	found, policy := MatchExistingPolicyByID(targetPolicyID, []WrappedPolicy{wp})
 	require.True(t, found)
 	require.NotNil(t, policy)
 }
 
 func TestGeneratePolicyToRestoreBackupOnly(t *testing.T) {
-	policyTwo, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwo, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
-	policyTwoStatic, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwoStatic, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
 	// test that if only backup provided, that backup is returned
-	generatedPolicyOne := generatePolicyToRestore(WrappedPolicy{}, policyTwo, RestorePoliciesInput{})
+	generatedPolicyOne := backup.GeneratePolicyToRestore(WrappedPolicy{}, policyTwo, backup.RestorePoliciesInput{})
 	require.NotNil(t, generatedPolicyOne)
 	require.True(t, reflect.DeepEqual(generatedPolicyOne.Policy, policyTwoStatic.Policy))
 }
 
 func TestGeneratePolicyToRestoreBackupWithoutOptions(t *testing.T) {
-	policyOne, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	policyOne, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
-	policyTwo, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
-	require.NoError(t, err)
-
-	policyTwoStatic, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwo, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
-	// test that providing two policies without options returns original with backup rules replacing original's
-	generatedPolicyTwo := generatePolicyToRestore(policyOne, policyTwo, RestorePoliciesInput{})
+	policyTwoStatic, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	require.NoError(t, err)
+
+	// test that providing two policies without options returns Original with backup rules replacing Original's
+	generatedPolicyTwo := backup.GeneratePolicyToRestore(policyOne, policyTwo, backup.RestorePoliciesInput{})
 	require.NotNil(t, generatedPolicyTwo)
 	require.True(t, reflect.DeepEqual(generatedPolicyTwo.Policy, policyTwoStatic.Policy))
 }
 
 func TestGeneratePolicyToRestoreBackupCustomOnly(t *testing.T) {
-	policyOne, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	policyOne, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
-	policyTwo, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwo, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
-	policyOneStatic, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	policyOneStatic, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
-	policyTwoStatic, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwoStatic, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
 	// test that providing two policies (with both different custom rules and managed rules) with option to only replace
 	// custom rules with backup's custom rules
-	generatedPolicyThree := generatePolicyToRestore(policyOne, policyTwo, RestorePoliciesInput{
+	generatedPolicyThree := backup.GeneratePolicyToRestore(policyOne, policyTwo, backup.RestorePoliciesInput{
 		CustomRulesOnly: true,
 	})
 
@@ -75,19 +77,19 @@ func TestGeneratePolicyToRestoreBackupCustomOnly(t *testing.T) {
 }
 
 func TestGeneratePolicyToRestoreBackupManagedOnly(t *testing.T) {
-	policyOne, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	policyOne, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
-	policyTwo, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwo, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
-	policyOneStatic, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	policyOneStatic, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
-	policyTwoStatic, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	policyTwoStatic, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
 	// test that providing two policies (with both different custom rules and managed rules) with option to only replace
 	// custom rules with backup's custom rules
-	generatedPolicyThree := generatePolicyToRestore(policyOne, policyTwo, RestorePoliciesInput{
+	generatedPolicyThree := backup.GeneratePolicyToRestore(policyOne, policyTwo, backup.RestorePoliciesInput{
 		ManagedRulesOnly: true,
 	})
 
@@ -107,22 +109,22 @@ func TestGeneratePolicyToRestoreBackupManagedOnly(t *testing.T) {
 // {"op":"remove","path":"/properties/customRules/rules/1/matchConditions/0/matchValue/1"}
 // {"op":"replace","path":"/properties/managedRules/managedRuleSets/0/ruleGroupOverrides/0/rules/1/exclusions/0/selector","value":"example"}
 func TestGeneratePolicyPatch(t *testing.T) {
-	pOne, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	pOne, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
 
-	pTwo, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
+	pTwo, err := carbo.loadWrappedPolicyFromFile("testfiles/wrapped-policy-two.json")
 	require.NoError(t, err)
 
-	patch, err := generatePolicyPatch(generatePolicyPatchInput{
-		original: pOne,
-		new:      pTwo.Policy,
+	patch, err := GeneratePolicyPatch(GeneratePolicyPatchInput{
+		Original: pOne,
+		New:      pTwo.Policy,
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, 4, patch.totalRuleDifferences)
-	require.Equal(t, 3, patch.customRuleChanges)
-	require.Equal(t, 2, patch.customRuleRemovals)
-	require.Equal(t, 1, patch.managedRuleChanges)
-	require.Equal(t, 0, patch.customRuleReplacements)
-	require.Equal(t, 1, patch.managedRuleReplacements)
+	require.Equal(t, 4, patch.TotalRuleDifferences)
+	require.Equal(t, 3, patch.CustomRuleChanges)
+	require.Equal(t, 2, patch.CustomRuleRemovals)
+	require.Equal(t, 1, patch.ManagedRuleChanges)
+	require.Equal(t, 0, patch.CustomRuleReplacements)
+	require.Equal(t, 1, patch.ManagedRuleReplacements)
 }

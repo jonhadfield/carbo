@@ -1,4 +1,4 @@
-package carbo
+package policy
 
 import (
 	"testing"
@@ -7,16 +7,16 @@ import (
 )
 
 func TestLoadWrappedPolicyFromFile(t *testing.T) {
-	wp, err := loadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
+	wp, err := LoadWrappedPolicyFromFile("testfiles/wrapped-policy-one.json")
 	require.NoError(t, err)
 	require.Equal(t, "/subscriptions/0a914e76-4921-4c19-b460-a2d36003525a/resourceGroups/flying/providers/Microsoft.Network/frontdoorWebApplicationFirewallPolicies/mypolicyone", wp.PolicyID)
 
-	_, err = loadWrappedPolicyFromFile("testfiles/non-existant-wrapped-policy-one.json")
+	_, err = LoadWrappedPolicyFromFile("testfiles/non-existant-wrapped-policy-one.json")
 	require.Error(t, err)
 }
 
 func TestLoadValidActionsFromPath(t *testing.T) {
-	as, err := loadActionsFromPath("testfiles/actions-one.yaml")
+	as, err := LoadActionsFromPath("testfiles/actions-one.yaml")
 	require.NoError(t, err)
 
 	for x := range as {
@@ -47,13 +47,13 @@ func TestLoadValidActionsFromPath(t *testing.T) {
 }
 
 func TestLoadInvalidActionsPath(t *testing.T) {
-	_, err := loadActionsFromPath("testfiles/does-not-exist.yaml")
+	_, err := LoadActionsFromPath("testfiles/does-not-exist.yaml")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no such file")
 }
 
 func TestValidActionsFromPathWithInvalidIP(t *testing.T) {
-	_, err := loadActionsFromPath("testfiles/actions-two.yaml")
+	_, err := LoadActionsFromPath("testfiles/actions-two.yaml")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid CIDR")
 	require.Contains(t, err.Error(), "64.238.183.333")

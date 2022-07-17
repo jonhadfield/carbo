@@ -2,6 +2,7 @@ package carbo
 
 import (
 	"fmt"
+	"github.com/jonhadfield/carbo/policy"
 	"log"
 	"strings"
 )
@@ -17,16 +18,16 @@ type RunActionsInput struct {
 	Debug  bool
 }
 
-func runActions(as []Action, stopOnFailure, dryRun bool) (err error) {
+func runActions(as []policy.Action, stopOnFailure, dryRun bool) (err error) {
 	for _, a := range as {
 		switch strings.ToLower(a.ActionType) {
 		case "log":
-			rid := ParseResourceID(a.Policy)
+			rid := policy.ParseResourceID(a.Policy)
 
 			log.Printf("running LOG action for Policy: %s\n", rid.Name)
 			log.Printf("loaded %d addresses from paths: %s\n", len(a.Nets), strings.Join(a.Paths, ","))
 
-			err = ApplyIPChanges(ApplyIPsInput{
+			err = policy.ApplyIPChanges(policy.ApplyIPsInput{
 				RID:      rid,
 				Output:   false,
 				Action:   "Log",
@@ -40,12 +41,12 @@ func runActions(as []Action, stopOnFailure, dryRun bool) (err error) {
 				return
 			}
 		case "allow":
-			rid := ParseResourceID(a.Policy)
+			rid := policy.ParseResourceID(a.Policy)
 
 			log.Printf("running ALLOW action for Policy: %s\n", rid.Name)
 			log.Printf("loaded %d addresses from paths: %s\n", len(a.Nets), strings.Join(a.Paths, ","))
 
-			err = ApplyIPChanges(ApplyIPsInput{
+			err = policy.ApplyIPChanges(policy.ApplyIPsInput{
 				RID:      rid,
 				Output:   false,
 				Action:   "Allow",
@@ -59,12 +60,12 @@ func runActions(as []Action, stopOnFailure, dryRun bool) (err error) {
 				return
 			}
 		case "block":
-			rid := ParseResourceID(a.Policy)
+			rid := policy.ParseResourceID(a.Policy)
 
 			log.Printf("running BLOCK action for Policy: %s\n", rid.Name)
 			log.Printf("loaded %d addresses from paths: %s\n", len(a.Nets), strings.Join(a.Paths, ","))
 
-			err = ApplyIPChanges(ApplyIPsInput{
+			err = policy.ApplyIPChanges(policy.ApplyIPsInput{
 				RID:      rid,
 				Output:   false,
 				Action:   "Block",
@@ -87,7 +88,7 @@ func runActions(as []Action, stopOnFailure, dryRun bool) (err error) {
 }
 
 func RunActions(i RunActionsInput) error {
-	actions, err := loadActionsFromPath(i.Path)
+	actions, err := policy.LoadActionsFromPath(i.Path)
 	if err != nil {
 		return err
 	}

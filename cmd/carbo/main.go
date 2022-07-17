@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	. "github.com/jonhadfield/carbo/backup"
+	. "github.com/jonhadfield/carbo/helpers"
+	. "github.com/jonhadfield/carbo/policy"
 	"os"
 	"time"
 
