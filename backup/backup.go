@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/jonhadfield/carbo/helpers"
 	"github.com/jonhadfield/carbo/policy"
+	"github.com/jonhadfield/carbo/session"
 	"log"
 	"net/url"
 	"os"
@@ -36,7 +37,7 @@ type BackupPoliciesInput struct {
 
 // BackupPolicies retrieves policies within a subscription and writes them, with meta-data, to individual json files
 func BackupPolicies(i BackupPoliciesInput) error {
-	s := policy.Session{}
+	s := session.Session{}
 
 	// fail if only one of the storage account destination required parameters been defined
 	if (i.StorageAccountResourceID != "" && i.ContainerURL == "") || (i.StorageAccountResourceID == "" && i.ContainerURL != "") {
@@ -52,7 +53,7 @@ func BackupPolicies(i BackupPoliciesInput) error {
 		return fmt.Errorf("either subscription id or resource ids are required")
 	}
 
-	o, err := s.GetWrappedPolicies(policy.GetWrappedPoliciesInput{
+	o, err := policy.GetWrappedPolicies(&s, policy.GetWrappedPoliciesInput{
 		SubscriptionID:    i.SubscriptionID,
 		AppVersion:        i.AppVersion,
 		FilterResourceIDs: i.RIDs,
@@ -231,7 +232,7 @@ func RestorePolicies(i RestorePoliciesInput) (err error) {
 		logrus.Debugf("retrieved target id from backup: %s", i.TargetPolicy)
 	}
 
-	s := policy.Session{}
+	s := session.Session{}
 
 	// restore loaded backups
 	policies, err := GetPoliciesToRestore(&s, wps, i)
@@ -249,7 +250,7 @@ func RestorePolicies(i RestorePoliciesInput) (err error) {
 		}
 
 		for _, p := range policies {
-			err = s.PushPolicy(policy.PushPolicyInput{
+			err = policy.PushPolicy(&s, policy.PushPolicyInput{
 				Name:          p.Name,
 				Subscription:  p.SubscriptionID,
 				ResourceGroup: p.ResourceGroup,
@@ -274,7 +275,7 @@ func (i RestorePoliciesInput) Validate() error {
 	return nil
 }
 
-func GetPoliciesToRestore(s *policy.Session, policyBackups []policy.WrappedPolicy, i RestorePoliciesInput) (policiesToRestore []policy.WrappedPolicy, err error) {
+func GetPoliciesToRestore(s *session.Session, policyBackups []policy.WrappedPolicy, i RestorePoliciesInput) (policiesToRestore []policy.WrappedPolicy, err error) {
 	// get all existing policies in subscription, filtered by target policy id if provided
 	var filterResourceIDs []string
 	if i.TargetPolicy != "" {
@@ -282,7 +283,7 @@ func GetPoliciesToRestore(s *policy.Session, policyBackups []policy.WrappedPolic
 	}
 
 	logrus.Debugf("retrieving target policy: %s", i.TargetPolicy)
-	o, err := s.GetWrappedPolicies(policy.GetWrappedPoliciesInput{
+	o, err := policy.GetWrappedPolicies(s, policy.GetWrappedPoliciesInput{
 		FilterResourceIDs: filterResourceIDs,
 		SubscriptionID:    i.SubscriptionID,
 	})
